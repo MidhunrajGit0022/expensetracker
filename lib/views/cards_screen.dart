@@ -29,31 +29,11 @@ class CardsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _buildCreditCard(
-            context,
-            color: const Color(0xFF1E1E1E),
-            bankName: 'Universal Bank',
-            cardNumber: '**** **** **** 1234',
-            expiry: '12/26',
-            holderName: 'ALEX JOHNSON',
-            balance: 12500.50,
-            cardType: 'VISA',
-          ),
-          const SizedBox(height: 20),
-          _buildCreditCard(
-            context,
-            color: const Color(0xFF0056D2),
-            bankName: 'City Bank',
-            cardNumber: '**** **** **** 5678',
-            expiry: '09/25',
-            holderName: 'ALEX JOHNSON',
-            balance: 3420.00,
-            cardType: 'MasterCard',
-          ),
-        ],
+      body: Center(
+        child: Text(
+          "Coming Soon",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }

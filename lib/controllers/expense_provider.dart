@@ -28,6 +28,14 @@ class CategoryNotifier extends StateNotifier<List<Category>> {
     await DatabaseHelper.instance.deleteCategory(id);
     state = state.where((c) => c.id != id).toList();
   }
+
+  Future<void> updateCategory(Category category) async {
+    await DatabaseHelper.instance.insertCategory(category);
+    state = [
+      for (final c in state)
+        if (c.id == category.id) category else c,
+    ];
+  }
 }
 
 final expenseProvider = StateNotifierProvider<ExpenseNotifier, List<Expense>>((

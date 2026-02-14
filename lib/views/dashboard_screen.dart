@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import '../controllers/expense_provider.dart';
 import '../models/expense.dart';
@@ -10,7 +11,6 @@ import 'statistics_screen.dart' hide Scaffold;
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
-  @override
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final allTransactions = ref.watch(expenseProvider);
@@ -260,20 +260,21 @@ class DashboardScreen extends ConsumerWidget {
             icon: Icons.help_outline,
           );
 
-    return Dismissible(
+    return Slidable(
       key: Key(expense.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) {
-        ref.read(expenseProvider.notifier).deleteExpense(expense.id);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Expense deleted')));
-      },
-      background: Container(
-        color: Theme.of(context).colorScheme.error,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              _showDeleteConfirmation(context, ref, expense);
+            },
+            backgroundColor: const Color(0xFFFE4A49),
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
+        ],
       ),
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -288,13 +289,49 @@ class DashboardScreen extends ConsumerWidget {
           ),
           subtitle: Text(
             DateFormat.yMMMd().format(expense.date),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: (Theme.of(context).textTheme.bodySmall ?? const TextStyle())
+                .copyWith(
+                  color: ref.watch(themeProvider)
+                      ? Colors.white
+                      : Colors.black54,
+                ),
           ),
           trailing: Text(
             '\$${expense.amount.toStringAsFixed(2)}',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+    Expense expense,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Expense'),
+        content: const Text('Do you want to delete this item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(expenseProvider.notifier).deleteExpense(expense.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Expense deleted')));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:uuid/uuid.dart';
 import '../controllers/expense_provider.dart';
 import '../models/category.dart';
@@ -17,17 +18,37 @@ class CategoryManagementScreen extends ConsumerWidget {
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: category.color.withOpacity(0.2),
-              child: Icon(category.icon, color: category.color),
+          return Slidable(
+            key: ValueKey(category.id),
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) {
+                    _showAddCategoryDialog(context, ref, category: category);
+                  },
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  icon: Icons.edit,
+                  label: 'Edit',
+                ),
+                SlidableAction(
+                  onPressed: (context) {
+                    _showDeleteConfirmation(context, ref, category);
+                  },
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete,
+                  label: 'Delete',
+                ),
+              ],
             ),
-            title: Text(category.name),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () {
-                _showDeleteConfirmation(context, ref, category);
-              },
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: category.color.withOpacity(0.2),
+                child: Icon(category.icon, color: category.color),
+              ),
+              title: Text(category.name),
             ),
           );
         },
@@ -67,16 +88,20 @@ class CategoryManagementScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddCategoryDialog(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
-    Color selectedColor = Colors.blue;
-    IconData selectedIcon = Icons.category;
+  void _showAddCategoryDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    Category? category,
+  }) {
+    final nameController = TextEditingController(text: category?.name);
+    Color selectedColor = category?.color ?? Colors.blue;
+    IconData selectedIcon = category?.icon ?? Icons.category;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Add Category'),
+          title: Text(category == null ? 'Add Category' : 'Edit Category'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -107,7 +132,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                           child: CircleAvatar(
                             backgroundColor: color,
                             radius: 15,
-                            child: selectedColor == color
+                            child: selectedColor.value == color.value
                                 ? const Icon(
                                     Icons.check,
                                     color: Colors.white,
@@ -168,17 +193,31 @@ class CategoryManagementScreen extends ConsumerWidget {
               onPressed: () {
                 final name = nameController.text.trim();
                 if (name.isNotEmpty) {
-                  final category = Category(
-                    id: const Uuid().v4(),
-                    name: name,
-                    color: selectedColor,
-                    icon: selectedIcon,
-                  );
-                  ref.read(categoriesProvider.notifier).addCategory(category);
+                  if (category == null) {
+                    final newCategory = Category(
+                      id: const Uuid().v4(),
+                      name: name,
+                      color: selectedColor,
+                      icon: selectedIcon,
+                    );
+                    ref
+                        .read(categoriesProvider.notifier)
+                        .addCategory(newCategory);
+                  } else {
+                    final updatedCategory = Category(
+                      id: category.id,
+                      name: name,
+                      color: selectedColor,
+                      icon: selectedIcon,
+                    );
+                    ref
+                        .read(categoriesProvider.notifier)
+                        .updateCategory(updatedCategory);
+                  }
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Add'),
+              child: Text(category == null ? 'Add' : 'Save'),
             ),
           ],
         ),
